@@ -2,49 +2,63 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enterprise Manager | 22BCS17076</title>
     <style>
         body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
         .hidden { display: none !important; }
-        .card { background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #334155; width: 400px; }
+        .card { background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #334155; width: 400px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .dashboard-container { width: 95%; max-width: 900px; display: none; margin: 30px 0; }
         input, select, button { padding: 12px; margin: 8px 0; width: 100%; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
-        button { background: #6366f1; font-weight: bold; cursor: pointer; border: none; }
-        .task-item { display: flex; justify-content: space-between; padding: 12px; margin-top: 10px; border-radius: 8px; }
-        .status-done { background: #064e3b; border-left: 5px solid #10b981; }
-        .status-todo { background: #451a03; border-left: 5px solid #f59e0b; }
+        button { background: #6366f1; font-weight: bold; cursor: pointer; border: none; transition: 0.2s; }
+        button:hover { background: #4f46e5; }
+        .task-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-top: 10px; border-radius: 8px; border-left: 5px solid; }
+        .status-done { background: #064e3b; border-color: #10b981; }
+        .status-todo { background: #451a03; border-color: #f59e0b; }
         .notification-box { background: #1e1b4b; border: 1px solid #4338ca; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .user-row { font-size: 13px; padding: 5px 0; border-bottom: 1px solid #312e81; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
     </style>
 </head>
 <body>
 
+<!-- Auth Screen -->
 <div id="auth-screen" class="card" style="align-self: center;">
-    <h2 id="auth-title">Welcome Back</h2>
+    <h2 id="auth-title">System Login</h2>
     <input type="email" id="email" placeholder="Email Address">
     <input type="password" id="pass" placeholder="Password">
+    
+    <!-- Role selection (Only visible during Registration) -->
+    <select id="role" class="hidden">
+        <option value="MEMBER">Team Member</option>
+        <option value="ADMIN">Administrator</option>
+    </select>
+    
     <button onclick="handleAuth()" id="auth-btn">Sign In</button>
-    <p onclick="toggleAuth()" style="cursor:pointer; text-align:center; font-size: 13px; color: #94a3b8; margin-top: 15px;" id="toggle-text">New member? Register</p>
+    <p onclick="toggleAuth()" style="cursor:pointer; text-align:center; font-size: 13px; color: #94a3b8; margin-top: 15px;" id="toggle-text">New member? Create Account</p>
 </div>
 
+<!-- Project Dashboard -->
 <div id="dashboard" class="dashboard-container">
-    <div style="display:flex; justify-content: space-between; align-items:center;">
+    <div class="header">
         <h1>🚀 Control Center</h1>
         <span id="user-display" style="color:#818cf8; font-weight:bold;"></span>
     </div>
 
     <!-- Admin Notification Panel -->
     <div id="admin-notifications" class="notification-box hidden">
-        <h4 style="margin:0 0 10px 0;">🔔 New Registrations (Live Feed)</h4>
+        <h4 style="margin:0 0 10px 0;">🔔 Recent Registrations</h4>
         <div id="notif-list"></div>
     </div>
 
+    <!-- Admin Task Creation -->
     <div class="card" id="admin-tools" style="width:100%; margin-bottom:20px;">
         <h3>➕ Assign New Project Task</h3>
         <input type="text" id="task-title" placeholder="Task description...">
         <button onclick="createTask()">Deploy Task</button>
     </div>
 
+    <!-- Task List -->
     <div class="card" style="width:100%;">
         <h3>📋 Active Tasks Tracking (22BCS17076)</h3>
         <div id="task-list"></div>
@@ -58,26 +72,37 @@
 
     function toggleAuth() {
         isLogin = !isLogin;
-        document.getElementById('auth-title').innerText = isLogin ? 'Welcome Back' : 'Join the Team';
+        document.getElementById('auth-title').innerText = isLogin ? 'System Login' : 'Create Account';
         document.getElementById('auth-btn').innerText = isLogin ? 'Sign In' : 'Sign Up';
-        document.getElementById('toggle-text').innerText = isLogin ? 'New member? Register' : 'Already a member? Login';
+        document.getElementById('toggle-text').innerText = isLogin ? 'New member? Create Account' : 'Already have an account? Login';
+        
+        // Fix: Toggle visibility of the role dropdown
+        const roleDropdown = document.getElementById('role');
+        if (isLogin) {
+            roleDropdown.classList.add('hidden');
+        } else {
+            roleDropdown.classList.remove('hidden');
+        }
     }
 
     async function handleAuth() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('pass').value;
+        const role = document.getElementById('role').value;
         const path = isLogin ? '/login' : '/signup';
         
         const res = await fetch(API + path, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password, role })
         });
         
         if(res.ok) {
             user = await res.json();
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('dashboard').style.display = 'block';
+            document.body.style.alignItems = 'flex-start'; // Adjust layout for dashboard
+            
             document.getElementById('user-display').innerText = `${user.email} [${user.role}]`;
             
             if(user.role === 'ADMIN') {
@@ -87,7 +112,9 @@
                 document.getElementById('admin-tools').classList.add('hidden');
             }
             loadTasks();
-        } else { alert("Access Denied: Invalid Credentials"); }
+        } else { 
+            alert("Access Denied: Invalid Credentials or Account doesn't exist."); 
+        }
     }
 
     async function loadNotifications() {
@@ -103,8 +130,8 @@
         const tasks = await res.json();
         document.getElementById('task-list').innerHTML = tasks.map(t => `
             <div class="task-item ${t.status === 'DONE' ? 'status-done' : 'status-todo'}">
-                <span>${t.title}</span>
-                <button style="width:auto; padding:5px 10px;" onclick="updateStatus(${t.id}, '${t.status === 'TODO' ? 'DONE' : 'TODO'}')">
+                <span>${t.title} <small>(${t.status})</small></span>
+                <button style="width:auto; padding:6px 12px; font-size:11px;" onclick="updateStatus(${t.id}, '${t.status === 'TODO' ? 'DONE' : 'TODO'}')">
                     ${t.status === 'TODO' ? 'Mark Done' : 'Undo'}
                 </button>
             </div>
