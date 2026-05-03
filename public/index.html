@@ -2,52 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Project Manager | 22BCS17076</title>
+    <title>Enterprise Manager | 22BCS17076</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
         .hidden { display: none !important; }
-        .card { background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #334155; width: 400px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .dashboard-container { width: 90%; max-width: 800px; display: none; margin: 20px; }
+        .card { background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #334155; width: 400px; }
+        .dashboard-container { width: 95%; max-width: 900px; display: none; margin: 30px 0; }
         input, select, button { padding: 12px; margin: 8px 0; width: 100%; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
-        button { background: #6366f1; font-weight: bold; cursor: pointer; border: none; transition: 0.2s; }
-        button:hover { background: #4f46e5; }
-        .task-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-top: 10px; border-radius: 8px; border-left: 5px solid; }
-        .status-done { background: #064e3b; border-color: #10b981; } /* Green for Done */
-        .status-todo { background: #451a03; border-color: #f59e0b; } /* Orange for Pending */
-        .btn-status { width: auto; padding: 6px 12px; font-size: 11px; margin: 0; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        button { background: #6366f1; font-weight: bold; cursor: pointer; border: none; }
+        .task-item { display: flex; justify-content: space-between; padding: 12px; margin-top: 10px; border-radius: 8px; }
+        .status-done { background: #064e3b; border-left: 5px solid #10b981; }
+        .status-todo { background: #451a03; border-left: 5px solid #f59e0b; }
+        .notification-box { background: #1e1b4b; border: 1px solid #4338ca; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .user-row { font-size: 13px; padding: 5px 0; border-bottom: 1px solid #312e81; }
     </style>
 </head>
 <body>
 
-<!-- Login/Register Section -->
-<div id="auth-screen" class="card">
-    <h2 id="auth-title">System Login</h2>
+<div id="auth-screen" class="card" style="align-self: center;">
+    <h2 id="auth-title">Welcome Back</h2>
     <input type="email" id="email" placeholder="Email Address">
     <input type="password" id="pass" placeholder="Password">
-    <select id="role" class="hidden">
-        <option value="MEMBER">Team Member</option>
-        <option value="ADMIN">Administrator</option>
-    </select>
     <button onclick="handleAuth()" id="auth-btn">Sign In</button>
-    <p onclick="toggleAuth()" style="cursor:pointer; font-size: 13px; margin-top: 15px; color: #94a3b8;" id="toggle-text">New user? Create Account</p>
+    <p onclick="toggleAuth()" style="cursor:pointer; text-align:center; font-size: 13px; color: #94a3b8; margin-top: 15px;" id="toggle-text">New member? Register</p>
 </div>
 
-<!-- Project Dashboard Section -->
 <div id="dashboard" class="dashboard-container">
-    <div class="header">
-        <h2>🚀 Project Dashboard</h2>
-        <span id="user-tag" style="font-size: 12px; color: #6366f1;"></span>
-    </div>
-    
-    <div class="card" id="admin-zone" style="width: 100%;">
-        <h3>➕ Assign New Task</h3>
-        <input type="text" id="task-title" placeholder="What needs to be done?">
-        <button onclick="createTask()">Create Task</button>
+    <div style="display:flex; justify-content: space-between; align-items:center;">
+        <h1>🚀 Control Center</h1>
+        <span id="user-display" style="color:#818cf8; font-weight:bold;"></span>
     </div>
 
-    <div class="card" style="width: 100%; margin-top: 20px;">
-        <h3>📋 Team Tasks (22BCS17076)</h3>
+    <!-- Admin Notification Panel -->
+    <div id="admin-notifications" class="notification-box hidden">
+        <h4 style="margin:0 0 10px 0;">🔔 New Registrations (Live Feed)</h4>
+        <div id="notif-list"></div>
+    </div>
+
+    <div class="card" id="admin-tools" style="width:100%; margin-bottom:20px;">
+        <h3>➕ Assign New Project Task</h3>
+        <input type="text" id="task-title" placeholder="Task description...">
+        <button onclick="createTask()">Deploy Task</button>
+    </div>
+
+    <div class="card" style="width:100%;">
+        <h3>📋 Active Tasks Tracking (22BCS17076)</h3>
         <div id="task-list"></div>
     </div>
 </div>
@@ -59,37 +58,44 @@
 
     function toggleAuth() {
         isLogin = !isLogin;
-        document.getElementById('auth-title').innerText = isLogin ? 'System Login' : 'Create Account';
+        document.getElementById('auth-title').innerText = isLogin ? 'Welcome Back' : 'Join the Team';
         document.getElementById('auth-btn').innerText = isLogin ? 'Sign In' : 'Sign Up';
-        document.getElementById('toggle-text').innerText = isLogin ? 'New user? Create Account' : 'Already have an account? Login';
-        document.getElementById('role').classList.toggle('hidden');
+        document.getElementById('toggle-text').innerText = isLogin ? 'New member? Register' : 'Already a member? Login';
     }
 
     async function handleAuth() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('pass').value;
-        const role = document.getElementById('role').value;
         const path = isLogin ? '/login' : '/signup';
         
         const res = await fetch(API + path, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ email, password, role })
+            body: JSON.stringify({ email, password })
         });
         
         if(res.ok) {
             user = await res.json();
-            // Switch Screens
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('dashboard').style.display = 'block';
-            document.body.style.alignItems = 'flex-start';
+            document.getElementById('user-display').innerText = `${user.email} [${user.role}]`;
             
-            document.getElementById('user-tag').innerText = `${user.email} (${user.role})`;
-            if(user.role !== 'ADMIN') document.getElementById('admin-zone').classList.add('hidden');
+            if(user.role === 'ADMIN') {
+                document.getElementById('admin-notifications').classList.remove('hidden');
+                loadNotifications();
+            } else {
+                document.getElementById('admin-tools').classList.add('hidden');
+            }
             loadTasks();
-        } else {
-            alert("Invalid Email or Password!");
-        }
+        } else { alert("Access Denied: Invalid Credentials"); }
+    }
+
+    async function loadNotifications() {
+        const res = await fetch(API + '/admin/notifications');
+        const users = await res.json();
+        document.getElementById('notif-list').innerHTML = users.map(u => 
+            `<div class="user-row">👤 ${u.email} joined as <b>${u.role}</b></div>`
+        ).join('');
     }
 
     async function loadTasks() {
@@ -97,8 +103,8 @@
         const tasks = await res.json();
         document.getElementById('task-list').innerHTML = tasks.map(t => `
             <div class="task-item ${t.status === 'DONE' ? 'status-done' : 'status-todo'}">
-                <span>${t.title} <small>(${t.status})</small></span>
-                <button class="btn-status" onclick="updateStatus(${t.id}, '${t.status === 'TODO' ? 'DONE' : 'TODO'}')">
+                <span>${t.title}</span>
+                <button style="width:auto; padding:5px 10px;" onclick="updateStatus(${t.id}, '${t.status === 'TODO' ? 'DONE' : 'TODO'}')">
                     ${t.status === 'TODO' ? 'Mark Done' : 'Undo'}
                 </button>
             </div>
