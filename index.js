@@ -12,33 +12,34 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+// Admin details for identification
+const ADMIN_EMAIL = 'shashank@test.com';
+const ADMIN_PASS = 'admin123'; // Isse login karna
+
 app.post('/signup', async (req, res) => {
   try {
     const { email, password, role } = req.body;
+    // Naye users hamesha MEMBER rahenge jab tak Admin change na kare
+    const userRole = email === ADMIN_EMAIL ? 'ADMIN' : (role || 'MEMBER');
     const result = await pool.query(
-      'INSERT INTO users (email, password, role) VALUES ($1, $2, $3) ON CONFLICT (email) DO UPDATE SET password = EXCLUDED.password, role = EXCLUDED.role RETURNING id, email, role',
-      [email, password, role || 'MEMBER']
+      'INSERT INTO users (email, password, role) VALUES ($1, $2, $3) ON CONFLICT (email) DO UPDATE SET password = EXCLUDED.password RETURNING id, email, role',
+      [email, password, userRole]
     );
     res.json(result.rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const result = await pool.query('SELECT * FROM users WHERE email = $1 AND password = $2', [email, password]);
-    if (result.rows.length === 0) return res.status(401).json({ error: "Invalid credentials" });
-    res.json(result.rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  const { email, password } = req.body;
+  const result = await pool.query('SELECT * FROM users WHERE email = $1 AND password = $2', [email, password]);
+  if (result.rows.length === 0) return res.status(401).json({ error: "Access Denied" });
+  res.json(result.rows[0]);
 });
 
-app.patch('/tasks/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-    const result = await pool.query('UPDATE tasks SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
-    res.json(result.rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+// Admin Notification: Get all users to see who joined
+app.get('/admin/notifications', async (req, res) => {
+  const result = await pool.query('SELECT id, email, role FROM users ORDER BY id DESC');
+  res.json(result.rows);
 });
 
 app.post('/tasks', async (req, res) => {
@@ -50,6 +51,13 @@ app.post('/tasks', async (req, res) => {
 app.get('/tasks', async (req, res) => {
   const result = await pool.query('SELECT * FROM tasks ORDER BY id DESC');
   res.json(result.rows);
+});
+
+app.patch('/tasks/:id', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  await pool.query('UPDATE tasks SET status = $1 WHERE id = $2', [status, id]);
+  res.json({ success: true });
 });
 
 const PORT = process.env.PORT || 3000;
