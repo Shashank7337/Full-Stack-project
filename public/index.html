@@ -2,65 +2,87 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Manager Dashboard</title>
     <style>
-        body { font-family: Arial; margin: 40px; background: #f4f4f4; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, select, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; }
-        button { background: #5d3fd3; color: white; border: none; cursor: pointer; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background: #0f172a; color: white; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #334155; }
+        input, select, button { padding: 12px; margin: 8px 0; width: 100%; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        button { background: #6366f1; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #4f46e5; }
         .stats { display: flex; gap: 20px; }
-        .stat-box { flex: 1; padding: 20px; background: #5d3fd3; color: white; border-radius: 8px; text-align: center; }
+        .stat-box { flex: 1; padding: 20px; background: #6366f1; border-radius: 12px; text-align: center; }
+        .stat-box h3 { margin: 0; font-size: 14px; text-transform: uppercase; opacity: 0.8; }
+        .stat-box p { margin: 10px 0 0; font-size: 28px; font-weight: bold; }
+        ul { list-style: none; padding: 0; }
+        li { background: #334155; padding: 12px; margin-bottom: 8px; border-radius: 6px; display: flex; justify-content: space-between; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; background: #6366f1; }
     </style>
 </head>
 <body>
-    <h1>🚀 Project Management Dashboard</h1>
+    <h1>🚀 Project Management Tool</h1>
 
     <div class="stats card">
-        <div class="stat-box"><h3>Total Tasks</h3><p id="total-tasks">0</p></div>
-        <div class="stat-box"><h3>Pending</h3><p id="pending-tasks">0</p></div>
-        <div class="stat-box"><h3>Completed</h3><p id="completed-tasks">0</p></div>
+        <div class="stat-box"><h3>Total</h3><p id="total">0</p></div>
+        <div class="stat-box"><h3>Pending</h3><p id="pending">0</p></div>
+        <div class="stat-box"><h3>Done</h3><p id="done">0</p></div>
     </div>
 
     <div class="card">
-        <h3>Create New Task (Admin)</h3>
-        <input type="text" id="task-title" placeholder="Task Name">
+        <h3>Create New Task</h3>
+        <input type="text" id="task-title" placeholder="Enter task title...">
         <select id="task-status">
             <option value="TODO">To Do</option>
-            <option value="IN_PROGRESS">In Progress</option>
             <option value="DONE">Done</option>
         </select>
-        <button onclick="createTask()">Add Task</button>
+        <button onclick="createTask()">Create Task</button>
     </div>
 
     <div class="card">
-        <h3>Task List</h3>
+        <h3>Recent Tasks</h3>
         <ul id="task-list"></ul>
     </div>
 
     <script>
-        const API_URL = window.location.origin;
+        const API_BASE = window.location.origin;
 
-        async function fetchDashboard() {
-            const res = await fetch(`${API_URL}/dashboard`);
-            const data = await res.json();
-        
-            document.getElementById('total-tasks').innerText = data.length || 0;
+        async function updateDashboard() {
+            const res = await fetch(`${API_BASE}/dashboard-stats`);
+            const stats = await res.json();
+            document.getElementById('total').innerText = stats.total || 0;
+            document.getElementById('pending').innerText = stats.pending || 0;
+            document.getElementById('done').innerText = stats.completed || 0;
+
+            const taskRes = await fetch(`${API_BASE}/tasks`);
+            const tasks = await taskRes.json();
+            const list = document.getElementById('task-list');
+            list.innerHTML = '';
+            tasks.forEach(task => {
+                list.innerHTML += `<li>${task.title} <span class="status-badge">${task.status}</span></li>`;
+            });
         }
 
         async function createTask() {
             const title = document.getElementById('task-title').value;
             const status = document.getElementById('task-status').value;
             
-            await fetch(`${API_URL}/tasks`, {
+            if(!title) return alert("Title is required");
+
+            await fetch(`${API_BASE}/tasks`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, status, admin_email: 'shashank@test.com' })
+                body: JSON.stringify({ 
+                    title, 
+                    status, 
+                    admin_email: 'shashank@test.com' 
+                })
             });
-            alert('Task Created!');
-            location.reload();
+
+            document.getElementById('task-title').value = '';
+            updateDashboard();
         }
 
-        fetchDashboard();
+        updateDashboard();
     </script>
 </body>
 </html>
