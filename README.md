@@ -32,19 +32,25 @@ Clone the Repository:
 
 Bash
 git clone https://github.com/Shashank7337/Full-Stack-project.git
+
 Install Dependencies:
 
 Bash
+
 npm install
+
 Setup Environment Variables:
+
 Create a .env file in the root directory and add your PostgreSQL connection string:
 
 Code snippet
 DATABASE_URL=your_postgresql_connection_string
 PORT=3000
+
 Run the Application:
 
 Bash
+
 npm start
 
 The project is successfully deployed and fully operational. All backend services are integrated with the PostgreSQL managed database on Railway. The application handles real-time data requests and is optimized for cloud performance.
