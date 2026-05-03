@@ -3,66 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Manager Dashboard</title>
+    <title>Project Manager Pro | 22BCD17076</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 40px; background: #0f172a; color: white; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #0f172a; color: white; }
+        .container { padding: 40px; display: none; }
         .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
-        input, select, button { padding: 12px; margin: 8px 0; width: 100%; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        #auth-screen { position: fixed; inset: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .auth-box { background: #1e293b; padding: 30px; border-radius: 12px; width: 350px; text-align: center; }
+        input, select, button { padding: 12px; margin: 8px 0; width: 100%; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; }
         button { background: #6366f1; border: none; font-weight: bold; cursor: pointer; }
         .stats { display: flex; gap: 20px; }
-        .stat-box { flex: 1; padding: 20px; background: #6366f1; border-radius: 12px; text-align: center; }
-        ul { list-style: none; padding: 0; }
-        li { background: #334155; padding: 12px; margin-bottom: 8px; border-radius: 6px; display: flex; justify-content: space-between; }
+        .stat-box { flex: 1; padding: 20px; border-radius: 12px; text-align: center; background: #6366f1; }
+        .team-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .team-table th, .team-table td { padding: 10px; border-bottom: 1px solid #334155; text-align: left; }
     </style>
 </head>
 <body>
-    <h1>🚀 Project Management Dashboard</h1>
-    <div class="stats card">
-        <div class="stat-box"><h3>Total Tasks</h3><p id="total">0</p></div>
-        <div class="stat-box"><h3>Pending</h3><p id="pending">0</p></div>
-        <div class="stat-box"><h3>Completed</h3><p id="completed">0</p></div>
+
+    <!-- Auth Screen -->
+    <div id="auth-screen">
+        <div class="auth-box">
+            <h2>🔐 Login / Signup</h2>
+            <input type="email" id="user-email" placeholder="Enter Email">
+            <select id="user-role">
+                <option value="MEMBER">Team Member</option>
+                <option value="ADMIN">Administrator</option>
+            </select>
+            <button onclick="login()">Enter System</button>
+        </div>
     </div>
-    <div class="card">
-        <h3>Create New Task (Admin)</h3>
-        <input type="text" id="task-title" placeholder="Task Title">
-        <select id="task-status">
-            <option value="TODO">To Do</option>
-            <option value="DONE">Done</option>
-        </select>
-        <button onclick="createTask()">Add Task</button>
+
+    <!-- Main Dashboard -->
+    <div class="container" id="main-content">
+        <h1>🚀 Admin Dashboard</h1>
+        <p id="welcome-msg"></p>
+
+        <div class="stats card">
+            <div class="stat-box"><h3>Tasks</h3><p id="total">0</p></div>
+            <div class="stat-box" style="background: #f59e0b;"><h3>Pending</h3><p id="pending">0</p></div>
+            <div class="stat-box" style="background: #10b981;"><h3>Done</h3><p id="completed">0</p></div>
+        </div>
+
+        <!-- Team Management Section -->
+        <div class="card" id="team-section">
+            <h3>👥 Team Members (Admin View)</h3>
+            <table class="team-table">
+                <thead><tr><th>ID</th><th>Email</th><th>Role</th></tr></thead>
+                <tbody id="team-list"></tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>➕ Create Task</h3>
+            <input type="text" id="task-title" placeholder="What needs to be done?">
+            <select id="task-status">
+                <option value="TODO">To Do</option>
+                <option value="DONE">Done</option>
+            </select>
+            <button onclick="createTask()">Create & Assign</button>
+        </div>
+
+        <div class="card">
+            <h3>📋 Task List</h3>
+            <div id="task-list-display"></div>
+        </div>
     </div>
-    <div class="card">
-        <h3>Task List</h3>
-        <ul id="task-list"></ul>
-    </div>
+
     <script>
         const API_URL = window.location.origin;
-        async function fetchDashboard() {
-            const res = await fetch(`${API_URL}/dashboard-stats`);
-            const data = await res.json();
-            document.getElementById('total').innerText = data.total || 0;
-            document.getElementById('pending').innerText = data.pending || 0;
-            document.getElementById('completed').innerText = data.completed || 0;
-            const taskRes = await fetch(`${API_URL}/tasks`);
-            const tasks = await taskRes.json();
-            const list = document.getElementById('task-list');
-            list.innerHTML = '';
-            tasks.forEach(t => {
-                list.innerHTML += `<li>${t.title} <span>${t.status}</span></li>`;
+        let currentUser = null;
+
+        async function login() {
+            const email = document.getElementById('user-email').value;
+            const role = document.getElementById('user-role').value;
+            if(!email) return alert("Email required");
+
+            const res = await fetch(`${API_URL}/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, role })
             });
+            currentUser = await res.json();
+            
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            document.getElementById('welcome-msg').innerText = `Welcome, ${currentUser.email} (${currentUser.role})`;
+            
+            if(currentUser.role !== 'ADMIN') {
+                document.getElementById('team-section').style.display = 'none';
+            }
+            
+            refreshData();
         }
+
+        async function refreshData() {
+            // Stats
+            const sRes = await fetch(`${API_URL}/dashboard-stats`);
+            const s = await sRes.json();
+            document.getElementById('total').innerText = s.total;
+            document.getElementById('pending').innerText = s.pending;
+            document.getElementById('completed').innerText = s.completed;
+
+            // Team Members
+            if(currentUser.role === 'ADMIN') {
+                const uRes = await fetch(`${API_URL}/all-users`);
+                const users = await uRes.json();
+                const tList = document.getElementById('team-list');
+                tList.innerHTML = users.map(u => `<tr><td>${u.id}</td><td>${u.email}</td><td>${u.role}</td></tr>`).join('');
+            }
+
+            // Tasks
+            const tRes = await fetch(`${API_URL}/tasks`);
+            const tasks = await tRes.json();
+            document.getElementById('task-list-display').innerHTML = tasks.map(t => `<div style="padding:10px; background:#334155; margin-bottom:5px; border-radius:5px;">${t.title} - <strong>${t.status}</strong></div>`).join('');
+        }
+
         async function createTask() {
             const title = document.getElementById('task-title').value;
             const status = document.getElementById('task-status').value;
-            await fetch(`${API_URL}/tasks`, {
+            const res = await fetch(`${API_URL}/tasks`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, status, admin_email: 'shashank@test.com' })
+                body: JSON.stringify({ title, status, admin_email: currentUser.email })
             });
-            alert('Task Created!');
-            fetchDashboard();
+            if(res.status === 403) alert("Only Admins can create tasks!");
+            document.getElementById('task-title').value = '';
+            refreshData();
         }
-        fetchDashboard();
     </script>
 </body>
 </html>
