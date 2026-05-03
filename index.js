@@ -20,9 +20,7 @@ app.post('/signup', async (req, res) => {
       [email, password, role || 'MEMBER']
     );
     res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/login', async (req, res) => {
@@ -31,9 +29,7 @@ app.post('/login', async (req, res) => {
     const result = await pool.query('SELECT * FROM users WHERE email = $1 AND password = $2', [email, password]);
     if (result.rows.length === 0) return res.status(401).json({ error: "Invalid credentials" });
     res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.patch('/tasks/:id', async (req, res) => {
@@ -42,18 +38,11 @@ app.patch('/tasks/:id', async (req, res) => {
     const { status } = req.body;
     const result = await pool.query('UPDATE tasks SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
     res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/all-users', async (req, res) => {
-  const result = await pool.query('SELECT id, email, role FROM users');
-  res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/tasks', async (req, res) => {
-  const { title, status, admin_email } = req.body;
+  const { title, status } = req.body;
   const result = await pool.query('INSERT INTO tasks (title, status) VALUES ($1, $2) RETURNING *', [title, status]);
   res.json(result.rows[0]);
 });
@@ -61,11 +50,6 @@ app.post('/tasks', async (req, res) => {
 app.get('/tasks', async (req, res) => {
   const result = await pool.query('SELECT * FROM tasks ORDER BY id DESC');
   res.json(result.rows);
-});
-
-app.get('/dashboard-stats', async (req, res) => {
-  const stats = await pool.query(`SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'TODO') as pending, COUNT(*) FILTER (WHERE status = 'DONE') as completed FROM tasks`);
-  res.json(stats.rows[0]);
 });
 
 const PORT = process.env.PORT || 3000;
