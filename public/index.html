@@ -2,134 +2,116 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Manager Pro | 22BCD17076</title>
+    <title>Secure PM Tool | 22BCD17076</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #0f172a; color: white; }
-        .container { padding: 40px; display: none; }
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
-        #auth-screen { position: fixed; inset: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 100; }
-        .auth-box { background: #1e293b; padding: 30px; border-radius: 12px; width: 350px; text-align: center; }
-        input, select, button { padding: 12px; margin: 8px 0; width: 100%; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; }
-        button { background: #6366f1; border: none; font-weight: bold; cursor: pointer; }
-        .stats { display: flex; gap: 20px; }
-        .stat-box { flex: 1; padding: 20px; border-radius: 12px; text-align: center; background: #6366f1; }
-        .team-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .team-table th, .team-table td { padding: 10px; border-bottom: 1px solid #334155; text-align: left; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; margin: 0; }
+        .hidden { display: none; }
+        .container { padding: 30px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
+        input, select, button { padding: 12px; margin: 5px 0; width: 100%; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        button { background: #6366f1; font-weight: bold; cursor: pointer; border: none; }
+        .task-item { display: flex; justify-content: space-between; background: #334155; padding: 10px; margin-top: 5px; border-radius: 5px; }
+        .btn-status { width: auto; padding: 5px 10px; font-size: 12px; }
+        .auth-screen { height: 100vh; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-    <!-- Auth Screen -->
-    <div id="auth-screen">
-        <div class="auth-box">
-            <h2>🔐 Login / Signup</h2>
-            <input type="email" id="user-email" placeholder="Enter Email">
-            <select id="user-role">
-                <option value="MEMBER">Team Member</option>
-                <option value="ADMIN">Administrator</option>
-            </select>
-            <button onclick="login()">Enter System</button>
-        </div>
+<div id="auth-screen" class="auth-screen">
+    <div class="card" style="width: 350px; text-align: center;">
+        <h2 id="auth-title">Login</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="pass" placeholder="Password">
+        <select id="role" class="hidden">
+            <option value="MEMBER">Team Member</option>
+            <option value="ADMIN">Admin</option>
+        </select>
+        <button onclick="handleAuth()" id="auth-btn">Sign In</button>
+        <p onclick="toggleAuth()" style="cursor:pointer; font-size: 12px; margin-top: 10px;" id="toggle-text">New user? Register here</p>
     </div>
+</div>
 
-    <!-- Main Dashboard -->
-    <div class="container" id="main-content">
-        <h1>🚀 Admin Dashboard</h1>
-        <p id="welcome-msg"></p>
-
-        <div class="stats card">
-            <div class="stat-box"><h3>Tasks</h3><p id="total">0</p></div>
-            <div class="stat-box" style="background: #f59e0b;"><h3>Pending</h3><p id="pending">0</p></div>
-            <div class="stat-box" style="background: #10b981;"><h3>Done</h3><p id="completed">0</p></div>
-        </div>
-
-        <!-- Team Management Section -->
-        <div class="card" id="team-section">
-            <h3>👥 Team Members (Admin View)</h3>
-            <table class="team-table">
-                <thead><tr><th>ID</th><th>Email</th><th>Role</th></tr></thead>
-                <tbody id="team-list"></tbody>
-            </table>
-        </div>
-
-        <div class="card">
-            <h3>➕ Create Task</h3>
-            <input type="text" id="task-title" placeholder="What needs to be done?">
-            <select id="task-status">
-                <option value="TODO">To Do</option>
-                <option value="DONE">Done</option>
-            </select>
-            <button onclick="createTask()">Create & Assign</button>
-        </div>
-
-        <div class="card">
-            <h3>📋 Task List</h3>
-            <div id="task-list-display"></div>
-        </div>
+<div id="dashboard" class="container hidden">
+    <h1>🚀 Project Dashboard</h1>
+    <div class="card" id="admin-zone">
+        <h3>➕ Create Task</h3>
+        <input type="text" id="task-title" placeholder="Task details...">
+        <button onclick="createTask()">Create & Assign</button>
     </div>
+    <div class="card">
+        <h3>📋 Task List (Click to Update)</h3>
+        <div id="task-list"></div>
+    </div>
+</div>
 
-    <script>
-        const API_URL = window.location.origin;
-        let currentUser = null;
+<script>
+    const API = window.location.origin;
+    let user = null;
+    let isLogin = true;
 
-        async function login() {
-            const email = document.getElementById('user-email').value;
-            const role = document.getElementById('user-role').value;
-            if(!email) return alert("Email required");
+    function toggleAuth() {
+        isLogin = !isLogin;
+        document.getElementById('auth-title').innerText = isLogin ? 'Login' : 'Register';
+        document.getElementById('auth-btn').innerText = isLogin ? 'Sign In' : 'Sign Up';
+        document.getElementById('toggle-text').innerText = isLogin ? 'New user? Register here' : 'Back to Login';
+        document.getElementById('role').classList.toggle('hidden');
+    }
 
-            const res = await fetch(`${API_URL}/signup`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, role })
-            });
-            currentUser = await res.json();
-            
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            document.getElementById('welcome-msg').innerText = `Welcome, ${currentUser.email} (${currentUser.role})`;
-            
-            if(currentUser.role !== 'ADMIN') {
-                document.getElementById('team-section').style.display = 'none';
-            }
-            
-            refreshData();
+    async function handleAuth() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('pass').value;
+        const role = document.getElementById('role').value;
+        const path = isLogin ? '/login' : '/signup';
+        
+        const res = await fetch(API + path, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email, password, role })
+        });
+        
+        if(res.ok) {
+            user = await res.json();
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            if(user.role !== 'ADMIN') document.getElementById('admin-zone').classList.add('hidden');
+            loadTasks();
+        } else {
+            alert("Auth Failed!");
         }
+    }
 
-        async function refreshData() {
-            // Stats
-            const sRes = await fetch(`${API_URL}/dashboard-stats`);
-            const s = await sRes.json();
-            document.getElementById('total').innerText = s.total;
-            document.getElementById('pending').innerText = s.pending;
-            document.getElementById('completed').innerText = s.completed;
+    async function loadTasks() {
+        const res = await fetch(API + '/tasks');
+        const tasks = await res.json();
+        document.getElementById('task-list').innerHTML = tasks.map(t => `
+            <div class="task-item">
+                <span>${t.title} [${t.status}]</span>
+                <button class="btn-status" onclick="updateStatus(${t.id}, '${t.status === 'TODO' ? 'DONE' : 'TODO'}')">
+                    Mark as ${t.status === 'TODO' ? 'Done' : 'Pending'}
+                </button>
+            </div>
+        `).join('');
+    }
 
-            // Team Members
-            if(currentUser.role === 'ADMIN') {
-                const uRes = await fetch(`${API_URL}/all-users`);
-                const users = await uRes.json();
-                const tList = document.getElementById('team-list');
-                tList.innerHTML = users.map(u => `<tr><td>${u.id}</td><td>${u.email}</td><td>${u.role}</td></tr>`).join('');
-            }
+    async function updateStatus(id, newStatus) {
+        await fetch(`${API}/tasks/${id}`, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ status: newStatus })
+        });
+        loadTasks();
+    }
 
-            // Tasks
-            const tRes = await fetch(`${API_URL}/tasks`);
-            const tasks = await tRes.json();
-            document.getElementById('task-list-display').innerHTML = tasks.map(t => `<div style="padding:10px; background:#334155; margin-bottom:5px; border-radius:5px;">${t.title} - <strong>${t.status}</strong></div>`).join('');
-        }
-
-        async function createTask() {
-            const title = document.getElementById('task-title').value;
-            const status = document.getElementById('task-status').value;
-            const res = await fetch(`${API_URL}/tasks`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, status, admin_email: currentUser.email })
-            });
-            if(res.status === 403) alert("Only Admins can create tasks!");
-            document.getElementById('task-title').value = '';
-            refreshData();
-        }
-    </script>
+    async function createTask() {
+        const title = document.getElementById('task-title').value;
+        await fetch(API + '/tasks', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ title, status: 'TODO', admin_email: user.email })
+        });
+        document.getElementById('task-title').value = '';
+        loadTasks();
+    }
+</script>
 </body>
 </html>
