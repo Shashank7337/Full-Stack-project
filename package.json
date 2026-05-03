@@ -1,12 +1,23 @@
 {
-  "name": "my-app",
+  "name": "full-stack-project",
   "version": "1.0.0",
+  "description": "Project Management Tool for Task Tracking",
+  "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "echo \"Error: no test specifications\" && exit 1"
   },
+  "keywords": [
+    "nodejs",
+    "express",
+    "postgresql",
+    "railway"
+  ],
+  "author": "Shashank Shekhar",
+  "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "pg": "^8.11.3",
-    "cors": "^2.8.5"
+    "pg": "^8.11.3"
   }
 }
