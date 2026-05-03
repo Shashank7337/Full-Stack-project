@@ -3,7 +3,7 @@ Full-Stack Project Manager
 This is a robust Full-Stack application developed using Node.js, Express.js, and PostgreSQL. The project is designed to demonstrate seamless integration between a backend server and a managed database, successfully deployed on the Railway cloud platform.
 
 🔗 Project Links
-Live Deployment URL: full-stack-project-production-4165.up.railway.app
+Live Deployment URL: https://full-stack-project-production-4165.up.railway.app/
 
 GitHub Repository: (https://github.com/Shashank7337/Full-Stack-project)
 
